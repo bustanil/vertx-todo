@@ -24,17 +24,13 @@ public class TodoService {
                         row.getBoolean("completed"),
                         row.getLocalDateTime("created_at")
                 ))
-                .execute().transform(ar -> {
-                    if (ar.succeeded()) {
-                        List<Todo> todos = new ArrayList<>();
-                        for (Todo todo : ar.result()) {
-                            todos.add(todo);
-                        }
-                        return Future.succeededFuture(todos);
-                    } else {
-                        throw new RuntimeException(ar.cause());
+                .execute()
+                .map(todos -> {
+                    List<Todo> todoList = new ArrayList<>();
+                    for (Todo todo : todos) {
+                        todoList.add(todo);
                     }
+                    return todoList;
                 });
-
     }
 }
