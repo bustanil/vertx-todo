@@ -2,6 +2,7 @@ package org.example;
 
 import io.vertx.core.Future;
 import io.vertx.sqlclient.SqlClient;
+import io.vertx.sqlclient.Tuple;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,4 +34,11 @@ public class TodoService {
                     return todoList;
                 });
     }
+
+    public Future<?> addTodo(Todo todo) {
+        return client.preparedQuery("insert into todo(id, task) values(?, ?)")
+                .execute(Tuple.of(todo.getId(), todo.getTask()))
+                .compose(ignored -> Future.succeededFuture());
+    }
+
 }

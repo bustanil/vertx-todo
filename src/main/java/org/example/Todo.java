@@ -11,6 +11,11 @@ public class Todo {
     private LocalDateTime createdAt;
     private Todo(){}
 
+    public Todo(String id, String task) {
+        this.id = id;
+        this.task = task;
+    }
+
     public Todo(String id, String task, Boolean completed, LocalDateTime createdAt){
         this.id = id;
         this.task = task;

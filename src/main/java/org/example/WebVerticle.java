@@ -5,14 +5,17 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.mysqlclient.MySQLConnectOptions;
 import io.vertx.mysqlclient.MySQLPool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
 
-import java.util.List;
+import java.util.UUID;
 
 public class WebVerticle extends AbstractVerticle {
+
+    private SqlClient client;
 
     @Override
     public void start() throws Exception {
@@ -28,7 +31,7 @@ public class WebVerticle extends AbstractVerticle {
         PoolOptions poolOptions = new PoolOptions().setMaxSize(5);
 
         // Create the client pool
-        SqlClient client = MySQLPool.pool(vertx, connectOptions, poolOptions);
+        client = MySQLPool.pool(vertx, connectOptions, poolOptions);
         TodoService todoService = new TodoService(client);
 
         // setup the HTTP routes
@@ -47,7 +50,12 @@ public class WebVerticle extends AbstractVerticle {
 
         router
                 .post("/todo")
-                .respond(ctx -> Future.succeededFuture());
+                .handler(BodyHandler.create())
+                .respond(ctx -> {
+                    Todo todo = ctx.body().asPojo(Todo.class);
+                    todo.setId(UUID.randomUUID().toString());
+                    return todoService.addTodo(todo);
+                });
 
         router
                 .put("/todo")
@@ -63,7 +71,17 @@ public class WebVerticle extends AbstractVerticle {
                 System.out.println("failed");
             }
         });
+    }
 
-
+    @Override
+    public void stop() throws Exception {
+        client.close(event -> {
+            if (event.succeeded()) {
+                System.out.println("Connection is successfully closed");
+            } else {
+                System.out.println("Failed to close connection");
+                event.cause().printStackTrace();
+            }
+        });
     }
 }
